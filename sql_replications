@@ -1,0 +1,36 @@
+## install mysql in all servers
+## in master server
+apt install mysql-server
+goto /etc/mysql/mysql.co***/mysql.conf
+    >> bind address = <your ip>
+    >>server-id = 1
+    >> un comment  log_bin
+service mysql restart
+mysql_secure_installation    # for log in into server
+mysql -u root -p       # log in into server
+
+create user 'naresh'@'%' identified by 'Naresh@1919';   ## create the user 
+grant replication slave on *.* to 'naresh'@'%';  ## sccess slve permissions to user
+create database pets;    # for checking create database
+
+mysqldump -u root -all-databases --master-data > master.sql  ## copying the database into a file
+
+grep CHANGE *sql | head -1   ## setup master log position
+
+# now copy file into slave database
+apt install mysql-server
+
+goto /etc/mysql/mysql.co***/mysql.conf
+    >> bind address = <your ip>
+    >>server-id = 2
+service mysql restart
+mysql -u root -p    # log into server
+## execute below commands in server
+  CHANGE MASTER TO
+  MASTER_HOST='<master ip>',
+  MASTER_USER='<user created in master>',
+  MASTER_PASSWORD='<passwor of user>';
+exit    ## come out from server
+mysql -u root < masterdump.sql   ## dump master created file into slave server
+start slave;
+show slave status\G;              ## to see the status of the slave
